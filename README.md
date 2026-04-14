@@ -35,8 +35,3 @@ Generated evaluation artifacts:
 - `evaluation/rag_report.json`
 
 Open Streamlit app and go to **Evaluation** page to view metrics.
-
-## Notes
-
-- This is a junior learning project for RAG/assistants.
-- Evaluation covers retrieval quality (Precision/Recall/F1) and performance (latency/docs/empty-rate).
