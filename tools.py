@@ -65,9 +65,16 @@ def book_parking_spot(full_name: str, car_plate: str, date_start: dt, date_end: 
         datetime_start=date_start,
         datetime_end=date_end,
         status="pending",
+        escalated_to_admin=True,
+        escalated_at=dt.now(),
+        decided_at=None,
+        decision_note="",
     )
 
-    return f"Success! Booking request created for {full_name}. Current status: pending."
+    return (
+        f"Success! Booking request created for {full_name}. "
+        "Your request was sent to an administrator for approval. Current status: pending."
+    )
 
 
 @tool
