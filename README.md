@@ -50,7 +50,18 @@ copy .env_example .env
 OPENAI_API_KEY=your_openai_api_key_here
 ```
 
+5. Build the vector index (required before first run).
+
+`chroma_db/` is gitignored, so it is not included in the repository.
+You must run indexing locally to create the database.
+
+```powershell
+python index_rag.py
+```
+
 ## Run the App
+
+After building the index:
 
 ```powershell
 streamlit run main.py
@@ -58,7 +69,7 @@ streamlit run main.py
 
 ## Build or Refresh the Vector Index
 
-Run after editing `knowledge.md`.
+Run this again after editing `knowledge.md`.
 
 ```powershell
 python index_rag.py
