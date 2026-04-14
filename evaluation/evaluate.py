@@ -8,7 +8,7 @@ PROJECT_ROOT = BASE_DIR.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from tools import retriever
+from tools import normalize_query, retriever
 
 # =========================
 # CONFIG
@@ -17,8 +17,6 @@ DATASET_PATH = BASE_DIR / "labeled_dataset.json"
 REPORT_PATH = BASE_DIR / "rag_report.json"
 K = 3
 
-def normalize_query(query: str) -> str:
-    return " ".join(query.strip().split())
 
 # =========================
 # LOAD DATASET

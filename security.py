@@ -4,6 +4,15 @@ from presidio_analyzer import AnalyzerEngine, PatternRecognizer, Pattern, Recogn
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
 
+
+OUTBOUND_REDACTION_ENABLED = True
+OUTBOUND_REDACTION_ENTITIES = (
+    "PERSON",
+    "PHONE_NUMBER",
+    "EMAIL_ADDRESS",
+    "CREDIT_CARD",
+)
+
 class PII_Vault:
     def __init__(self):
         # 1. Create pattern for Serbian license plates
@@ -69,5 +78,33 @@ class PII_Vault:
             return self.vault.get(token, token)
 
         return re.sub(pattern, replace_match, text)
+
+    def redact_outbound_text(self, text: str):
+        if not text or not OUTBOUND_REDACTION_ENABLED:
+            return text
+
+        analyzer_results = self.analyzer.analyze(
+            text=text,
+            entities=list(OUTBOUND_REDACTION_ENTITIES),
+            language="en",
+        )
+
+        if not analyzer_results:
+            return text
+
+        operators = {
+            entity: OperatorConfig("replace", {"new_value": f"[{entity}]"})
+            for entity in OUTBOUND_REDACTION_ENTITIES
+        }
+
+        redacted = self.anonymizer.anonymize(
+            text=text,
+            analyzer_results=analyzer_results,
+            operators=operators,
+        )
+        return redacted.text
+
+    def render_safe_text(self, text: str):
+        return self.redact_outbound_text(self.deanonymize_text(text))
 
 protector = PII_Vault()

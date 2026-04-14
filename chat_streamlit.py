@@ -3,13 +3,13 @@ from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from security import protector
 
 
-def _deanonymize_payload(value):
+def _render_safe_payload(value):
     if isinstance(value, str):
-        return protector.deanonymize_text(value)
+        return protector.render_safe_text(value)
     if isinstance(value, dict):
-        return {k: _deanonymize_payload(v) for k, v in value.items()}
+        return {k: _render_safe_payload(v) for k, v in value.items()}
     if isinstance(value, list):
-        return [_deanonymize_payload(v) for v in value]
+        return [_render_safe_payload(v) for v in value]
     return value
 
 
@@ -41,16 +41,16 @@ def run_chat(app, config, title="Parking Assistant"):
         elif isinstance(msg, AIMessage):
             if msg.content:
                 with st.chat_message("assistant"):
-                    st.markdown(protector.deanonymize_text(msg.content))
+                    st.markdown(protector.render_safe_text(msg.content))
             
             if msg.tool_calls:
                 for tool_call in msg.tool_calls:
                     with st.status(f"Tool request: {tool_call['name']}", state="complete"):
-                        st.json(_deanonymize_payload(tool_call['args']))
+                        st.json(_render_safe_payload(tool_call['args']))
         
         elif isinstance(msg, ToolMessage):
             with st.status(f"Tool result: {msg.name}", state="complete"):
-                st.markdown(protector.deanonymize_text(msg.content))
+                st.markdown(protector.render_safe_text(msg.content))
 
     if user_input := st.chat_input("Type your message..."):
         with st.chat_message("user"):
@@ -61,12 +61,7 @@ def run_chat(app, config, title="Parking Assistant"):
 
         with st.spinner("Assistant is thinking..."):
             try:
-                result = app.invoke(inputs, config=config)
-                if "messages" in result and result["messages"]:
-                    last_msg = result["messages"][-1]
-                    if isinstance(last_msg, AIMessage) and last_msg.content:
-                        with st.chat_message("assistant"):
-                            st.markdown(protector.deanonymize_text(last_msg.content))
+                app.invoke(inputs, config=config)
                 st.rerun()
             except Exception as e:
                 st.error(f"Agent call failed: {e}")

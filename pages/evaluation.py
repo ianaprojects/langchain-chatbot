@@ -1,7 +1,6 @@
 import json
 from datetime import datetime
 from pathlib import Path
-
 import streamlit as st
 
 
@@ -62,7 +61,7 @@ col5.metric("Avg docs", f"{performance_metrics.get('avg_docs', 0.0):.2f}")
 col6.metric("Empty rate", f"{performance_metrics.get('empty_rate', 0.0):.2%}")
 
 st.subheader("Per-query metrics")
-st.dataframe(table_rows, width='stretch'=True, hide_index=True)
+st.dataframe(table_rows, width='stretch', hide_index=True)
 
 with st.expander("Raw report"):
     st.json(report)

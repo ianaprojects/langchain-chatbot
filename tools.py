@@ -22,7 +22,7 @@ retriever = vectorstore.as_retriever(
 )
 
 
-def _normalize_query(query: str) -> str:
+def normalize_query(query: str) -> str:
     return " ".join(query.strip().split())
 
 
@@ -35,9 +35,9 @@ def debug_runtime_info(runtime: ToolRuntime):
     Returns runtime object details for the current execution context.
     """
     
-    print(runtime.config["configurable"]["thread_id"])
-
-    return runtime
+    thread_id = runtime.config["configurable"].get("thread_id")
+    print(thread_id)
+    return {"thread_id": thread_id}
 
 @tool
 def book_parking_spot(full_name: str, car_plate: str, date_start: dt, date_end: dt, runtime: ToolRuntime):
@@ -109,15 +109,14 @@ def search_parking_info(query: str):
 
     Requirements:
     - `query` must be non-empty
-    - `query` must be a short, natural question or keyword phrase (max ~10 words)
-    - Do NOT expand or paraphrase the query — pass the user's question as-is
-    - `query` should be in English
+    - `query` should be a short, specific English question or keyword phrase
+    - Keep the user intent as-is; do not invent extra constraints
     """
 
     if not query or not query.strip():
         return "Search request must include a non-empty query."
 
-    normalized_query = _normalize_query(query)
+    normalized_query = normalize_query(query)
     # Truncate to protect retrieval quality against over-expanded LLM queries
     search_query = normalized_query[:120]
 

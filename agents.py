@@ -9,7 +9,7 @@ from tools import (
     debug_runtime_info,
 )
 
-from prompts import _ClientAgent_Prompt
+from prompts import ClientAgent_Prompt
 
 
 def get_base_model():
@@ -32,7 +32,7 @@ def create_user_agent():
     return create_agent(
         model,
         tools=tools,
-        system_prompt=_ClientAgent_Prompt,
+        system_prompt=ClientAgent_Prompt,
         checkpointer=InMemorySaver(),
     )
 
