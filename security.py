@@ -6,39 +6,39 @@ from presidio_anonymizer.entities import OperatorConfig
 
 class PII_Vault:
     def __init__(self):
-        # 1. Создаем паттерн для сербских номеров
-        # Учитываем форматы: BG-123-AA, BG 123 AA, BG123AA
+        # 1. Create pattern for Serbian license plates
+        # Supported formats: BG-123-AA, BG 123 AA, BG123AA
         plate_pattern = Pattern(
             name="serbian_plate_pattern", 
             regex=r'[A-Z]{2}[-\s]?\d{3,5}[-\s]?[A-Z]{2}', 
             score=0.8
         )
         
-        # 2. Создаем сам распознаватель
+        # 2. Create the recognizer
         plate_recognizer = PatternRecognizer(
             supported_entity="CAR_PLATE", 
             patterns=[plate_pattern]
         )
 
-        # 3. Настраиваем реестр (добавляем стандартные + наш новый)
+        # 3. Configure the registry (add built-in recognizers + our custom one)
         registry = RecognizerRegistry()
-        registry.load_predefined_recognizers() # Загружаем PERSON, PHONE_NUMBER и т.д.
+        registry.load_predefined_recognizers() # Load PERSON, PHONE_NUMBER, etc.
         registry.add_recognizer(plate_recognizer)
 
-        # 4. Передаем реестр в движок
+        # 4. Pass the registry to the engine
         self.analyzer = AnalyzerEngine(registry=registry)
         self.anonymizer = AnonymizerEngine()
         self.vault = {}
 
     def _generate_typed_id(self, value, entity_type):
-        """Создает типизированный ID и сохраняет в локальный сейф"""
+        """Creates a typed ID and stores it in the local vault"""
         prefix = "USER" if entity_type == "PERSON" else "PLATE" if entity_type == "CAR_PLATE" else "ID"
         unique_id = f"{prefix}_{uuid.uuid4().hex[:4].upper()}"
         self.vault[unique_id] = value
         return unique_id
 
     def anonymize_session(self, text: str):
-        # Теперь CAR_PLATE доступен для анализа
+        # CAR_PLATE is now available for analysis
         results = self.analyzer.analyze(text=text, entities=["PERSON", "CAR_PLATE", "PHONE_NUMBER", "CREDIT_CARD", "EMAIL_ADDRESS"], language='en')
         
         operators = {
@@ -54,18 +54,18 @@ class PII_Vault:
     
     def deanonymize_text(self, text: str):
         """
-        Ищет в тексте любые токены (USER_XXXX, PLATE_XXXX) 
-        и заменяет их на реальные значения из self.vault.
+        Searches the text for any tokens (USER_XXXX, PLATE_XXXX)
+        and replaces them with the real values from self.vault.
         """
         if not text:
             return text
             
-        # Регулярка ищет слова, начинающиеся с USER_, PLATE_ или LOC_
+        # Regex matches tokens starting with USER_, PLATE_, LOC_, or ID_
         pattern = r'(USER_[A-Z0-9]{4}|PLATE_[A-Z0-9]{4}|LOC_[A-Z0-9]{4}|ID_[A-Z0-9]{4})'
         
         def replace_match(match):
             token = match.group(0)
-            # Возвращаем реальное значение, если оно есть в сейфе
+            # Return the real value if it exists in the vault
             return self.vault.get(token, token)
 
         return re.sub(pattern, replace_match, text)
