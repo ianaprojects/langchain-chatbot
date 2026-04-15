@@ -44,25 +44,6 @@ def _resume_pending_action(approve: bool) -> str:
     return get_result_text(result)
 
 
-if st.session_state.admin_pending_action:
-    action = st.session_state.admin_pending_action
-    st.warning("Pending tool call requires confirmation")
-    st.write(f"Tool: {action.get('name', '-')}")
-    st.json(action.get("arguments", {}))
-
-    confirm_col, cancel_col = st.columns(2)
-    with confirm_col:
-        if st.button("Execute tool call", key="approve_pending_tool"):
-            output = _resume_pending_action(approve=True)
-            st.success(output)
-            st.rerun()
-    with cancel_col:
-        if st.button("Reject tool call", key="reject_pending_tool"):
-            output = _resume_pending_action(approve=False)
-            st.info(output)
-            st.rerun()
-
-
 pending = [
     (reservation_id, reservation)
     for reservation_id, reservation in fake_db_instance.items()
@@ -116,11 +97,31 @@ for item in st.session_state.admin_agent_history[-10:]:
     with st.chat_message(item["role"]):
         st.markdown(item["content"])
 
+pending_action = st.session_state.admin_pending_action
+
+if pending_action:
+    with st.chat_message("assistant"):
+        st.warning("Pending tool call requires confirmation")
+        st.write(f"Tool: {pending_action.get('name', '-')}")
+        st.json(pending_action.get("arguments", {}))
+
+        confirm_col, cancel_col = st.columns(2)
+        with confirm_col:
+            if st.button("Execute tool call", key="approve_pending_tool"):
+                output = _resume_pending_action(approve=True)
+                st.success(output)
+                st.rerun()
+        with cancel_col:
+            if st.button("Reject tool call", key="reject_pending_tool"):
+                output = _resume_pending_action(approve=False)
+                st.info(output)
+                st.rerun()
+
 admin_input = st.chat_input("Type an admin command...")
 if admin_input:
     st.session_state.admin_agent_history.append({"role": "user", "content": admin_input})
     output, interrupted = _send_admin_command(admin_input)
     if interrupted:
-        output = f"{output} Confirm or reject in the pending action section above."
+        output = f"{output} Confirm or reject below this message."
     st.session_state.admin_agent_history.append({"role": "assistant", "content": output})
     st.rerun()

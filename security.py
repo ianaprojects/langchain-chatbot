@@ -12,6 +12,7 @@ OUTBOUND_REDACTION_ENTITIES = (
     "EMAIL_ADDRESS",
     "CREDIT_CARD",
 )
+UI_REDACTION_EXCLUDED_ENTITIES = ("PERSON",)
 
 class PII_Vault:
     def __init__(self):
@@ -46,6 +47,20 @@ class PII_Vault:
         self.vault[unique_id] = value
         return unique_id
 
+    def tokenize_value(self, value: str, entity_type: str):
+        """
+        Deterministically map known sensitive values to vault tokens.
+        Reuses existing token for the same value when possible.
+        """
+        if not value:
+            return value
+
+        for token, real_value in self.vault.items():
+            if real_value == value:
+                return token
+
+        return self._generate_typed_id(value, entity_type)
+
     def anonymize_session(self, text: str):
         # CAR_PLATE is now available for analysis
         results = self.analyzer.analyze(text=text, entities=["PERSON", "CAR_PLATE", "PHONE_NUMBER", "CREDIT_CARD", "EMAIL_ADDRESS"], language='en')
@@ -79,22 +94,29 @@ class PII_Vault:
 
         return re.sub(pattern, replace_match, text)
 
-    def redact_outbound_text(self, text: str):
+    def redact_outbound_text(self, text: str, entities: tuple[str, ...] | list[str] | None = None):
         if not text or not OUTBOUND_REDACTION_ENABLED:
+            return text
+
+        selected_entities = tuple(entities or OUTBOUND_REDACTION_ENTITIES)
+        if not selected_entities:
             return text
 
         analyzer_results = self.analyzer.analyze(
             text=text,
-            entities=list(OUTBOUND_REDACTION_ENTITIES),
+            entities=list(selected_entities),
             language="en",
         )
+
+        if "PERSON" in selected_entities:
+            analyzer_results = self._filter_address_like_person_entities(text, analyzer_results)
 
         if not analyzer_results:
             return text
 
         operators = {
             entity: OperatorConfig("replace", {"new_value": f"[{entity}]"})
-            for entity in OUTBOUND_REDACTION_ENTITIES
+            for entity in selected_entities
         }
 
         redacted = self.anonymizer.anonymize(
@@ -104,7 +126,65 @@ class PII_Vault:
         )
         return redacted.text
 
+    def _filter_address_like_person_entities(self, text: str, analyzer_results: list):
+        """Avoid masking PERSON entities when they are likely part of an address."""
+        if not analyzer_results:
+            return analyzer_results
+
+        street_tokens = (
+            "street",
+            "st",
+            "st.",
+            "road",
+            "rd",
+            "rd.",
+            "avenue",
+            "ave",
+            "ave.",
+            "boulevard",
+            "blvd",
+            "blvd.",
+            "ulica",
+            "ul.",
+            "bulevar",
+            "trg",
+            "bb",
+        )
+
+        filtered = []
+        for result in analyzer_results:
+            if getattr(result, "entity_type", "") != "PERSON":
+                filtered.append(result)
+                continue
+
+            end = int(getattr(result, "end", 0))
+            window = text[end : min(len(text), end + 32)].strip().lower()
+            starts_with_number = bool(re.match(r"^\d+", window))
+            has_street_hint = any(re.match(rf"^{re.escape(token)}\b", window) for token in street_tokens)
+            if starts_with_number or has_street_hint:
+                continue
+
+            filtered.append(result)
+
+        return filtered
+
     def render_safe_text(self, text: str):
         return self.redact_outbound_text(self.deanonymize_text(text))
+
+    def render_user_visible_text(self, text: str):
+        """
+        UI renderer:
+        - deanonymize placeholders for user readability
+        - keep person names visible
+        - still redact other sensitive entities
+        """
+        if not text:
+            return text
+
+        visible_text = self.deanonymize_text(text)
+        ui_entities = tuple(
+            entity for entity in OUTBOUND_REDACTION_ENTITIES if entity not in UI_REDACTION_EXCLUDED_ENTITIES
+        )
+        return self.redact_outbound_text(visible_text, entities=ui_entities)
 
 protector = PII_Vault()

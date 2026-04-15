@@ -5,7 +5,7 @@ from security import protector
 
 def _render_safe_payload(value):
     if isinstance(value, str):
-        return protector.render_safe_text(value)
+        return protector.render_user_visible_text(value)
     if isinstance(value, dict):
         return {k: _render_safe_payload(v) for k, v in value.items()}
     if isinstance(value, list):
@@ -41,7 +41,7 @@ def run_chat(app, config, title="Parking Assistant"):
         elif isinstance(msg, AIMessage):
             if msg.content:
                 with st.chat_message("assistant"):
-                    st.markdown(protector.render_safe_text(msg.content))
+                    st.markdown(protector.render_user_visible_text(msg.content))
             
             if msg.tool_calls:
                 for tool_call in msg.tool_calls:
@@ -50,7 +50,7 @@ def run_chat(app, config, title="Parking Assistant"):
         
         elif isinstance(msg, ToolMessage):
             with st.status(f"Tool result: {msg.name}", state="complete"):
-                st.markdown(protector.render_safe_text(msg.content))
+                st.markdown(protector.render_user_visible_text(msg.content))
 
     if user_input := st.chat_input("Type your message..."):
         with st.chat_message("user"):

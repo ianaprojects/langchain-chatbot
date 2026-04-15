@@ -8,7 +8,7 @@ PROJECT_ROOT = BASE_DIR.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from tools import normalize_query, retriever
+from user_tools import normalize_query, retriever
 
 # =========================
 # CONFIG

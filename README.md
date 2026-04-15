@@ -14,8 +14,11 @@ Lightweight Retrieval-Augmented Generation chatbot for Skyline Belgrade Parking.
 ## Project Structure
 
 - `main.py`: Streamlit app entrypoint
-- `agents.py`: chatbot graph (intent routing, RAG, reservation flow)
-- `tools.py`: retrieval and reservation tools
+- `user_agent.py`: user chatbot graph (intent routing, RAG, reservation flow)
+- `user_tools.py`: user retrieval and reservation tools
+- `user_chat_streamlit.py`: user chat Streamlit renderer
+- `admin_agent.py`: admin agent orchestration
+- `admin_tools.py`: admin approval/listing tools
 - `security.py`: PII anonymization/redaction
 - `index_rag.py`: knowledge indexing into Chroma
 - `knowledge.md`: source knowledge base

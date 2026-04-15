@@ -1,5 +1,5 @@
 import streamlit as st
-from agents import user_agent
+from user_agent import user_agent
 from chat_streamlit import run_chat
 
 if "thread_id" not in st.session_state:
