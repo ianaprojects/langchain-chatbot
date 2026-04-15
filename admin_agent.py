@@ -20,6 +20,30 @@ def _fmt_datetime(value: dt | None) -> str:
     return value.strftime("%Y-%m-%d %H:%M")
 
 
+def apply_reservation_decision(
+    reservation_id: str,
+    status: Literal["approved", "rejected"],
+    note: str = "",
+) -> str:
+    reservation = fake_db_instance.get(reservation_id)
+    if reservation is None:
+        return f"Reservation {reservation_id} not found."
+
+    now = dt.now()
+    fake_db_instance[reservation_id] = replace(
+        reservation,
+        status=status,
+        escalated_to_admin=True,
+        escalated_at=reservation.escalated_at or now,
+        decided_at=now,
+        decision_note=note,
+        updated_at=now,
+    )
+    debug_print_fake_db(f"[fake_db:admin_{status}]")
+
+    return f"Reservation {reservation_id} updated to {status}."
+
+
 @tool
 def get_reservations(status: Literal["pending", "approved", "rejected", "all"] = "pending") -> str:
     """List reservations filtered by status. Use status='all' to show everything."""
@@ -64,24 +88,7 @@ def update_reservation_status(
     note: str = "",
 ) -> str:
     """Approve or reject a reservation by reservation_id."""
-
-    reservation = fake_db_instance.get(reservation_id)
-    if reservation is None:
-        return f"Reservation {reservation_id} not found."
-
-    now = dt.now()
-    fake_db_instance[reservation_id] = replace(
-        reservation,
-        status=status,
-        escalated_to_admin=True,
-        escalated_at=reservation.escalated_at or now,
-        decided_at=now,
-        decision_note=note,
-        updated_at=now,
-    )
-    debug_print_fake_db(f"[fake_db:admin_{status}]")
-
-    return f"Reservation {reservation_id} updated to {status}."
+    return apply_reservation_decision(reservation_id=reservation_id, status=status, note=note)
 
 
 ADMIN_TOOLS = [get_reservations, update_reservation_status]

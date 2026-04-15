@@ -1,6 +1,7 @@
 import streamlit as st
 
 from admin_agent import (
+    apply_reservation_decision,
     get_default_admin_config,
     get_interrupt_action,
     get_result_text,
@@ -10,7 +11,7 @@ from admin_agent import (
 from fake_db import fake_db_instance
 
 
-st.set_page_config(page_title="Admin Approvals", page_icon="✅", layout="wide")
+st.set_page_config(page_title="Admin Approvals", page_icon="✅", layout="centered")
 st.title("Admin Approvals")
 st.caption("Review pending requests and approve or reject reservations.")
 
@@ -22,14 +23,6 @@ if "admin_pending_action" not in st.session_state:
 
 config = get_default_admin_config()
 config["configurable"]["thread_id"] = st.session_state.admin_thread_id
-
-
-def _direct_action(command: str) -> str:
-    """Invoke admin agent and auto-confirm any interrupt. Used by explicit buttons."""
-    result = invoke_admin_agent(command, config)
-    if get_interrupt_action(result):
-        result = resume_admin_agent(config=config, approve=True)
-    return get_result_text(result)
 
 
 def _send_admin_command(command: str) -> tuple[str, bool]:
@@ -95,17 +88,21 @@ else:
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("Approve", key=f"approve_{reservation_id}"):
-                    cmd = f"Approve reservation {reservation_id}"
-                    if decision_note.strip():
-                        cmd += f" with note: {decision_note.strip()}"
-                    st.success(_direct_action(cmd))
+                    output = apply_reservation_decision(
+                        reservation_id=reservation_id,
+                        status="approved",
+                        note=decision_note.strip(),
+                    )
+                    st.success(output)
                     st.rerun()
             with col2:
                 if st.button("Reject", key=f"reject_{reservation_id}"):
-                    cmd = f"Reject reservation {reservation_id}"
-                    if decision_note.strip():
-                        cmd += f" with note: {decision_note.strip()}"
-                    st.warning(_direct_action(cmd))
+                    output = apply_reservation_decision(
+                        reservation_id=reservation_id,
+                        status="rejected",
+                        note=decision_note.strip(),
+                    )
+                    st.warning(output)
                     st.rerun()
 
 
