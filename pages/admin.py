@@ -9,11 +9,19 @@ from admin_agent import (
     resume_admin_agent,
 )
 from fake_db import fake_db_instance
+from mcp_client import check_mcp_server_health
 
 
 st.set_page_config(page_title="Admin Approvals", page_icon="✅", layout="centered")
 st.title("Admin Approvals")
 st.caption("Review pending requests and approve or reject reservations.")
+
+is_mcp_healthy, mcp_health_message = check_mcp_server_health()
+if not is_mcp_healthy:
+    st.error(f"Storage service warning: {mcp_health_message}")
+    st.caption("Approvals can still update in-memory state, but persistent MCP write may fail.")
+else:
+    st.caption("Storage service: connected")
 
 if "admin_thread_id" not in st.session_state:
     st.session_state.admin_thread_id = "admin-session"

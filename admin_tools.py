@@ -7,12 +7,19 @@ from typing import Literal
 from langchain.tools import tool
 
 from fake_db import debug_print_fake_db, fake_db_instance
+from mcp_client import save_reservation_via_mcp
 
 
 def _format_datetime(value: dt | None) -> str:
     if not value:
         return "-"
     return value.strftime("%Y-%m-%d %H:%M")
+
+
+def _to_iso(value: dt | None) -> str | None:
+    if value is None:
+        return None
+    return value.isoformat(timespec="seconds")
 
 
 def apply_reservation_decision(
@@ -34,7 +41,31 @@ def apply_reservation_decision(
         decision_note=note,
         updated_at=now,
     )
+    updated = fake_db_instance[reservation_id]
     debug_print_fake_db(f"[fake_db:admin_{status}]")
+
+    if status == "approved":
+        payload = {
+            "reservation_id": reservation_id,
+            "full_name": updated.full_name or "",
+            "numplate": updated.numplate or "",
+            "datetime_start": _to_iso(updated.datetime_start) or "",
+            "datetime_end": _to_iso(updated.datetime_end) or "",
+            "status": updated.status,
+            "escalated_to_admin": updated.escalated_to_admin,
+            "escalated_at": _to_iso(updated.escalated_at),
+            "decided_at": _to_iso(updated.decided_at),
+            "decision_note": updated.decision_note or "",
+            "created_at": _to_iso(updated.created_at) or "",
+            "updated_at": _to_iso(updated.updated_at) or "",
+        }
+        try:
+            save_reservation_via_mcp(payload)
+        except Exception as exc:  # Keep reservation decision, but surface persistence issue.
+            return (
+                f"Reservation {reservation_id} updated to {status}, "
+                f"but MCP save failed: {exc}"
+            )
 
     return f"Reservation {reservation_id} updated to {status}."
 
