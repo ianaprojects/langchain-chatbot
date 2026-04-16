@@ -2,6 +2,8 @@
 
 Lightweight Retrieval-Augmented Generation chatbot for Skyline Belgrade Parking.
 
+Detailed usage documentation is available in `SYSTEM_USAGE.md`.
+
 ## Features
 
 - Streamlit chat UI with unified LangGraph orchestration
