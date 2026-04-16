@@ -127,9 +127,19 @@ if pending_action:
 
 admin_input = st.chat_input("Type an admin command...")
 if admin_input:
+    with st.chat_message("user"):
+        st.markdown(admin_input)
+
     st.session_state.admin_agent_history.append({"role": "user", "content": admin_input})
-    output, interrupted = _send_admin_command(admin_input)
+
+    with st.spinner("Assistant is thinking..."):
+        output, interrupted = _send_admin_command(admin_input)
+
     if interrupted:
         output = f"{output} Confirm or reject below this message."
+
+    with st.chat_message("assistant"):
+        st.markdown(output)
+
     st.session_state.admin_agent_history.append({"role": "assistant", "content": output})
     st.rerun()
