@@ -1,6 +1,7 @@
 [
   {
     "query": "Where is the parking located?",
+    "expected_answer": "Skyline Belgrade Parking is in central Belgrade inside the Skyline tower complex at Kneza Miloša 90, Belgrade, Serbia. The entrance is on the right side of the main tower, near the Coffee Time café.",
     "relevant_ids": [
       "chunk_0",
       "chunk_1",
@@ -12,6 +13,7 @@
   },
   {
     "query": "How do I find the entrance?",
+    "expected_answer": "The parking entrance is on the right side of the Skyline main tower at Kneza Miloša 90. When driving along Kneza Miloša, look for the Skyline building and Coffee Time café (across the street); the entrance ramp is on the building’s right-hand side, clearly marked with parking signs and a downward ramp.",
     "relevant_ids": [
       "chunk_1",
       "chunk_2",
@@ -22,42 +24,49 @@
   },
   {
     "query": "What is the address of the parking?",
+    "expected_answer": "Kneza Miloša 90, Belgrade, Serbia.",
     "relevant_ids": [
       "chunk_1"
     ]
   },
   {
     "query": "What are the parking opening hours?",
+    "expected_answer": "The parking is open 24 hours a day, 7 days a week (always open).",
     "relevant_ids": [
       "chunk_4"
     ]
   },
   {
     "query": "How much does parking cost per hour?",
+    "expected_answer": "200 RSD per hour.",
     "relevant_ids": [
       "chunk_5"
     ]
   },
   {
     "query": "What is the daily maximum price?",
+    "expected_answer": "2500 RSD",
     "relevant_ids": [
       "chunk_5"
     ]
   },
   {
     "query": "What payment methods can I use?",
+    "expected_answer": "You can pay with cash, credit card, or debit card. Payment is made at the exit terminal (online/advance payment is not available).",
     "relevant_ids": [
       "chunk_6"
     ]
   },
   {
     "query": "Can I pay by card?",
+    "expected_answer": "Yes. You can pay by card (credit or debit) at the exit terminal before leaving; payment is required before exit.",
     "relevant_ids": [
       "chunk_6"
     ]
   },
   {
     "query": "What is the maximum vehicle height?",
+    "expected_answer": "2.1 meters.",
     "relevant_ids": [
       "chunk_7"
     ]

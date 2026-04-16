@@ -65,8 +65,34 @@ Is this chunk directly useful for answering the question?
 Answer ONLY "yes" or "no".
 Be strict: answer "yes" only if the chunk contains specific relevant information.
 """
-    response = judge.invoke(prompt).content.lower()
-    return "yes" in response
+    try:
+        response = judge.invoke(prompt).content.lower()
+        return "yes" in response
+    except Exception as e:
+        print(f"  ⚠️ Error checking relevance: {e}")
+        return False
+
+def generate_expected_answer(query, relevant_chunks):
+    """Generate an answer based on relevant chunks using the LLM judge."""
+    if not relevant_chunks:
+        return "I do not know based on the available information."
+    
+    context = "\n\n".join(relevant_chunks)
+    prompt = f"""Question: {query}
+
+Context:
+{context}
+
+Answer the question directly based ONLY on the provided context.
+If the context does not contain enough information, answer: "I do not know based on the available information."
+Keep the answer concise and factual."""
+    
+    try:
+        response = judge.invoke(prompt).content.strip()
+        return response
+    except Exception as e:
+        print(f"  ⚠️ Error generating answer: {e}")
+        return "I do not know based on the available information."
 
 # =========================
 # AUTO LABELING
@@ -77,17 +103,29 @@ for idx, query in enumerate(queries):
     print(f"\nProcessing [{idx+1}/{len(queries)}]: {query}")
 
     relevant_ids = []
+    relevant_texts = []
 
-    for chunk in chunks:
+    for chunk_idx, chunk in enumerate(chunks):
+        print(f"  Checking chunk {chunk_idx+1}/{len(chunks)}...", end="", flush=True)
         if is_relevant(query, chunk["text"]):
             relevant_ids.append(chunk["id"])
+            relevant_texts.append(chunk["text"])
+            print(" ✓ relevant")
+        else:
+            print(" ✗")
 
-    # fallback если ничего не нашли
+    # fallback if no relevant chunks found
     if len(relevant_ids) == 0:
-        print("⚠️ No relevant chunks found")
+        print("  ⚠️ No relevant chunks found")
+        expected_answer = "I do not know based on the available information."
+    else:
+        print(f"  Generating answer from {len(relevant_ids)} relevant chunks...")
+        expected_answer = generate_expected_answer(query, relevant_texts)
+        print(f"  Answer: {expected_answer[:80]}...")
 
     labeled_data.append({
         "query": query,
+        "expected_answer": expected_answer,
         "relevant_ids": relevant_ids
     })
 

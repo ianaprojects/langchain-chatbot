@@ -89,6 +89,8 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
+`requirements.txt` is the current full environment snapshot generated from `pip freeze`.
+
 3. Create environment file from template.
 ```powershell
 copy .env_example .env
@@ -103,6 +105,9 @@ MCP_SERVER_HOST=127.0.0.1
 MCP_SERVER_PORT=8001
 MCP_SERVER_PATH=/mcp
 ```
+
+LangSmith settings from `.env_example` are optional for the basic Stage 1 chatbot flow.
+They are only needed if you want to enable LangSmith tracing/evaluation as an upgrade on top of the Stage 1 implementation.
 
 5. Build the vector index (required before first run).
 
@@ -148,6 +153,32 @@ Run retrieval and latency evaluation:
 python evaluation/evaluate.py
 ```
 
+Run LangSmith offline evaluation (answer quality + retrieval + latency):
+
+```powershell
+python evaluation/evaluate_langsmith.py
+```
+
+This is an optional evaluation upgrade. The basic Stage 1 implementation does not require LangSmith.
+
+This script uses the LangSmith SDK `evaluate()` flow and creates an experiment
+in your LangSmith workspace. It expects these `.env` values:
+
+- `LANGSMITH_TRACING=true`
+- `LANGSMITH_API_KEY=...`
+- `LANGSMITH_PROJECT=skyline-rag`
+- optional `LANGSMITH_WORKSPACE_ID=...` (multi-workspace API keys)
+- optional `LANGSMITH_TEST_CACHE=.langsmith_cache` (stable and cheaper reruns)
+
+Optional runtime knobs (via `.env`):
+
+- `EVAL_TOP_K` (default `3`)
+- `EVAL_LATENCY_SLA_SECONDS` (default `2.0`)
+- `EVAL_MAX_CONCURRENCY` (default `4`)
+- `EVAL_NUM_REPETITIONS` (default `1`)
+- `LANGSMITH_DATASET` (default `skyline-rag-offline`)
+- `LANGSMITH_EXPERIMENT_PREFIX` (default `skyline-rag-2026`)
+
 Optional: regenerate labeled retrieval dataset:
 
 ```powershell
@@ -167,4 +198,9 @@ Open Streamlit and navigate to the `Evaluation` page.
 - Reservation data is in-memory mock data.
 - Stage 3 persistence writes only approved reservations to local JSONL storage.
 - Privacy vault state is process-local and not isolated for multi-tenant deployments.
-- Evaluation focuses on retrieval metrics (Precision@K, Recall@K, F1) and latency, not full answer quality benchmarking.
+- Local script `evaluation/evaluate.py` focuses on retrieval metrics and latency.
+- LangSmith script `evaluation/evaluate_langsmith.py` adds answer-quality scoring and experiment tracking.
+
+Presidio needs -> will download it automatically during the initial app run
+Installing collected packages: en-core-web-lg
+Successfully installed en-core-web-lg-3.8.0
