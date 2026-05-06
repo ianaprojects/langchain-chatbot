@@ -43,30 +43,36 @@ def debug_runtime_info(runtime: ToolRuntime):
 
 
 @tool
-def book_parking_spot(full_name: str, car_plate: str, date_start: dt, date_end: dt, runtime: ToolRuntime):
+def book_parking_spot(
+    full_name: str,
+    numplate: str,
+    datetime_start: dt,
+    datetime_end: dt,
+    runtime: ToolRuntime,
+):
     """
     Create or update a booking request for Skyline Belgrade Parking.
 
     Call this tool only when all required fields are known:
     - full_name: user full name
-    - car_plate: vehicle plate number
-    - date_start: reservation start datetime
-    - date_end: reservation end datetime
+    - numplate: vehicle plate number
+    - datetime_start: reservation start datetime
+    - datetime_end: reservation end datetime
 
     Do not call this tool with partial booking data.
     """
     # Resolve anonymized placeholders to real values stored in local vault.
     real_name = protector.get_real_value(full_name)
-    real_plate = protector.get_real_value(car_plate)
+    real_numplate = protector.get_real_value(numplate)
 
     reservation_id = runtime.config["configurable"]["thread_id"]
 
     upsert_reservation(
         reservation_id,
         full_name=real_name,
-        numplate=real_plate,
-        datetime_start=date_start,
-        datetime_end=date_end,
+        numplate=real_numplate,
+        datetime_start=datetime_start,
+        datetime_end=datetime_end,
         status="pending",
         escalated_to_admin=True,
         escalated_at=dt.now(),
@@ -99,13 +105,13 @@ def get_user_reservation_status(runtime: ToolRuntime) -> str:
 
     if res:
         safe_name = protector.tokenize_value(res.full_name, "PERSON") if res.full_name else "-"
-        safe_plate = protector.tokenize_value(res.numplate, "CAR_PLATE") if res.numplate else "-"
+        safe_numplate = protector.tokenize_value(res.numplate, "CAR_PLATE") if res.numplate else "-"
         start = res.datetime_start.isoformat() if res.datetime_start else "-"
         end = res.datetime_end.isoformat() if res.datetime_end else "-"
         return (
             "Reservation details:\n\n"
             f"Name: {safe_name}\n"
-            f"Plate: {safe_plate}\n"
+            f"Plate: {safe_numplate}\n"
             f"Start: {start}\n"
             f"End: {end}\n"
             f"Status: {res.status}"
