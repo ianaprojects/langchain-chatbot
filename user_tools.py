@@ -114,47 +114,6 @@ def get_user_reservation_status(runtime: ToolRuntime) -> str:
     return "Reservation not found"
 
 
-@tool
-def search_parking_info(query: str):
-    """
-    Search Skyline Belgrade Parking knowledge base.
-
-    Call this tool for factual questions about parking information, such as:
-    - location and address
-    - working hours
-    - pricing
-    - parking rules and limits
-    - safety/security
-
-    Requirements:
-    - `query` must be non-empty
-    - `query` should be a short, specific English question or keyword phrase
-    - Keep the user intent as-is; do not invent extra constraints
-    """
-
-    if not query or not query.strip():
-        return "Search request must include a non-empty query."
-
-    normalized_query = normalize_query(query)
-    # Truncate to protect retrieval quality against over-expanded LLM queries
-    search_query = normalized_query[:120]
-
-    # Vector search
-    docs = retriever.invoke(search_query)
-
-    if not docs:
-        return "No specific information found in the knowledge base."
-
-    seen_contents = set()
-    unique_contents = []
-    for doc in docs:
-        if doc.page_content not in seen_contents:
-            seen_contents.add(doc.page_content)
-            unique_contents.append(doc.page_content)
-
-    return "\n\n".join(unique_contents)
-
-
 def upsert_reservation(reservation_id, **kwargs):
     if reservation_id in fake_db_instance:
         current = fake_db_instance[reservation_id]

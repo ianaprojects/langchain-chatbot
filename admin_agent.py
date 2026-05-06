@@ -6,7 +6,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 
-from admin_tools import apply_reservation_decision, get_reservations, update_reservation_status
+from admin_tools import get_reservations, update_reservation_status
 
 
 ADMIN_TOOLS = [get_reservations, update_reservation_status]

@@ -168,9 +168,6 @@ class PII_Vault:
 
         return filtered
 
-    def render_safe_text(self, text: str):
-        return self.redact_outbound_text(self.deanonymize_text(text))
-
     def render_user_visible_text(self, text: str):
         """
         UI renderer:

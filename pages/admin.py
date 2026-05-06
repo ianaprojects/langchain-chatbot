@@ -1,7 +1,7 @@
 import streamlit as st
 
+from admin_tools import apply_reservation_decision
 from admin_agent import (
-    apply_reservation_decision,
     get_default_admin_config,
     get_interrupt_action,
     get_result_text,

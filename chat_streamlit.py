@@ -13,12 +13,6 @@ def _render_safe_payload(value):
     return value
 
 
-def get_default_config():
-    if "thread_id" not in st.session_state:
-        st.session_state.thread_id = "user"
-    return {"configurable": {"thread_id": st.session_state.thread_id}}
-
-
 def run_chat(app, config, title="Parking Assistant"):
 
     st.title(title)
@@ -67,8 +61,3 @@ def run_chat(app, config, title="Parking Assistant"):
                 st.error(f"Agent call failed: {e}")
                 st.info("Try rephrasing your request or reloading the page.")
 
-
-if __name__ == "__main__":
-    from agents import user_agent
-
-    run_chat(user_agent, get_default_config())
